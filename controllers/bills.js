@@ -22,6 +22,7 @@ app.get('/bill/:id', (req, res) => {
     app.post('/bills', (req, res) => {
       const newBill = new Bill({
       date: req.body.date,
+      username: req.body.username,
       service_charge: req.body.service_charge,
       payment_date: req.body.payment_date
     });
@@ -33,9 +34,10 @@ app.get('/bill/:id', (req, res) => {
 
     // update a user
   app.put('/bill/:id', (req, res) => {
-    Bill.findById(req.params.id, 'date service_charge payment_date', function (error, bill) {
+    Bill.findById(req.params.id, 'date username service_charge payment_date', function (error, bill) {
     if (error) { console.error(error); }
       bill.date= req.body.date
+      bill.username= req.body.username
       bill.service_charge= req.body.service_charge
       bill.payment_date = req.body.payment_date
        bill.save(function (error, bill) {
