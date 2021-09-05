@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const Notification = mongoose.model('Notification',
     new Schema({
         for: String,
-        complain_id: String
+        complaint_id: String
     },
     {
         collection: "notification"

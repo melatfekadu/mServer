@@ -25,7 +25,8 @@ module.exports.controller = function (app) {
 
                             let token = auth.getToken(15);
                             result.id = result_data._id;
-                            result.phone_no = result_data.phone_no;
+                            result.bp_num = result_data.bp_number;
+                            result.user_name = result_data.user_name;
                             result.type = "customer"
 
                             auth.saveCredential(token, result);
@@ -55,14 +56,14 @@ module.exports.controller = function (app) {
 
     });
 
-    app.post('/employee_login', (req, res) => {
+    app.post('/Login', (req, res) => {
 
         try{
 
             let result = {};
 
             Employees.findOne({
-                email: req.body.email,
+                user_name: req.body.user_name,
                 password: req.body.password
             }, function(err, result_data) {
 
@@ -114,12 +115,13 @@ module.exports.controller = function (app) {
 
     });
 
-    app.post('/auth_info/', (req, res) => {
+    app.get('/auth_info/:token', (req, res) => {
 
         try{
             let info = auth.getCredentials();
-            if(info[req.body.token]){
-                res.json(my_response.prepare(info[req.body.token]));
+            if(info[req.params.token]){
+                res.json(my_response.prepare(info[req.params.token]));
+                res.redirect('/customer')
             }else{
                 res.json(my_response.error("invalid token"));
             }

@@ -2,243 +2,101 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Complaint = require('../models/Complaint.js');
-const Notification = require('../models/notification.js');
-const auth = require('../Extra/auth.js');
-const response = require('../Extra/Response.js');
-
 //const router = express.Router();
 module.exports.controller = function (app) {
+  // get all complaints
+  app.get('/complaints', (req, res) => {
+    Complaint.find({}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+      if (error) { console.log(error); }
+      res.send(users);
+    })
+  })
+    //get all assistant's complaint
+    app.get('/complaints1', (req, res) => {
+      Complaint.find({department:'Assistance'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+        if (error) { console.log(error); }
+        res.send(users);
+      })
+    })
+    //get customer service
+    app.get('/complaints2', (req, res) => {
+      Complaint.find({department:'Customer_Service'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+        if (error) { console.log(error); }
+        res.send(users);
+      })
+    })
+  app.get('/complaints3', (req, res) => {
+    Complaint.find({department:'Operation_Maintenance'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+      if (error) { console.log(error); }
+      res.send(users);
+    })
+  })
+  //get a single complaints details
+  app.get('/complaints/:id', (req, res) => {
+    Complaint.findById(req.params.id, 'user_name address phone_no select department description type subComplaint status', function (error, user) {
+      if (error) { console.log(error); }
+      res.send(user)
+    })
+  })
 
-    // get all complaints
-    app.get('/all_complaints/:token', (req, res) => {
 
-        try {
+  // add a new user
+  app.post('/complaints', (req, res) => {
+    const user_id = getUser(req.body.token);
+    const bp = user_id.bp_number;
 
-            let user = auth.checkAuth(req.params.token);
-
-            if (!user) {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (!user.type) {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (user.type != "employee" && user.department && user.department != "admin") {
-                res.json(response.error("Access Denied!"));
-            }
-
-            Complaint.find({}, 'user_name address phone_no date description type subComplaint', function (error, users) {
-                if (error) {
-                    console.log(error);
-                    res.json(response.error("error occurred!"));
-                }
-                res.json(response.prepare(users));
-            });
-
-        } catch (err) {
-            res.json(response.error(err.message));
-        }
-
+    const newComplaint = new Complaint({
+      date: Date.now(),
+      bp_number: bp,
+      select: req.body.select,
+      department: req.body.department,
+      description: req.body.description,
+      type: req.body.type,
+      subComplaint:req.body.subComplaint,
+      status: req.body.status,
     });
-
-    //get a single complaints details
-    app.get('/complaints/:token/:id', (req, res) => {
-
-        try {
-
-            let user = auth.checkAuth(req.params.token);
-
-            if (!user) {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (!user.type || user.type != "employee") {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (user.department && user.department != "admin") {
-                res.json(response.error("Access Denied!"));
-            }
-
-            Complaint.findById(req.params.id, 'user_name address phone_no date description type subComplaint', function (error, users) {
-                if (error) {
-                    console.log(error);
-                    res.json(response.error("error occurred!"));
-                }
-                res.json(response.prepare(users))
-            });
-
-        } catch (err) {
-            res.json(response.error(err.message));
-        }
-
+    newComplaint.save((error, complaint) => {
+      if (error) { console.log(error); }
+      res.send(complaint);
     });
+  });
 
-    app.get('/complaints/:token', (req, res) => {
+  // update a user
+  app.put('/complaints/:id', (req, res) => {
 
-        try {
-
-            let user = auth.checkAuth(req.params.token);
-
-            if (!user) {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (!user.type || user.type != "employee") {
-                res.json(response.error("Access Denied!"));
-            }
-
-            // if (user.department && user.department != "admin"){
-            //     res.json(response.error("Access Denied!"));
-            // }
-
-            Complaint.findById({type: user.department}, 'user_name address phone_no date description type subComplaint', function (error, users) {
-                if (error) {
-                    console.log(error);
-                    res.json(response.error("error occurred!"));
-                }
-                res.json(response.prepare(users));
-            });
-
-        } catch (err) {
-            res.json(response.error(err.message));
-        }
-
-    });
-
-    // add a new user
-    app.post('/complaints', (req, res) => {
-
-        try {
-
-            let user = auth.checkAuth(req.body.token);
-
-            if (!user) {
-                res.json(response.error("Access Denied!"));
-            }
-
-            if (!user.type || user.type != "customer") {
-                res.json(response.error("Access Denied!"));
-            }
-
-            const newComplaint = new Complaint({
-                user_name: req.body.user_name,
-                address: req.body.address,
-                phone_no: req.body.phone_no,
-                date: req.body.date,
-                description: req.body.description,
-                type: req.body.type,
-                subComplaint: req.body.subComplaint
-            });
-            newComplaint.save((error, complaint) => {
-                if (error) {
-                    console.log(error);
-                    res.json(response.error("error occurred!"));
-                }
-
-                new Notification({
-                    for: req.body.type,
-                    complain_id: complaint._id
-                }).save((error2, notify)=>{
-                    if (error2) { throw error2; }
-                    //res.json(response.error("error occurred!"));
-                });
-
-                res.json(response.prepare(complaint));
-            });
-
-        } catch (err) {
-            res.json(response.error(err.message));
-        }
-
-    });
-
-    // update a user
-    app.put('/complaints/:token/:id', (req, res) => {
-
-      try{
-
-        let user = auth.checkAuth(req.params.token);
-
-        if (!user) {
-          res.json(response.error("Access Denied!"));
-        }
-
-        if (!user.type || user.type != "employee") {
-          res.json(response.error("Access Denied!"));
-        }
-
-        if (user.department && user.department != "assistant") {
-          res.json(response.error("Access Denied!"));
-        }
-
-        Complaint.findById(req.params.id, function (error, complaint) {
-
-          if(error) {
-            console.error(error);
-            res.json(response.error("error occurred!"));
-          }
-
-          complaint.user_name = req.body.user_name
-          complaint.address = req.body.address
-          complaint.phone_no = req.body.phone_no
-          complaint.date = req.body.date
-          complaint.description = req.body.description
-          complaint.type = req.body.type
-          complaint.subComplaint = req.body.subComplaint
-
-          complaint.save(function (error, complaints) {
-            if (error) {
-              console.log(error);
-              res.json(response.error("error occurred!"));
-            }
-            res.json(response.prepare(complaints));
-          })
-
-        });
-
-      }catch(err){
-        res.json(response.error(err.message));
+    Complaint.findById(req.params.id, function (error, complaint) {
+      
+      if (error) {
+        console.error(error);
       }
 
-    });
+      complaint.user_name = req.body.user_name
+      complaint.address = req.body.address
+      complaint.phone_no = req.body.phone_no
+      complaint.date = req.body.date
+      complaint.description = req.body.description
+      complaint.type = req.body.type
+      complaint.subComplaint=req.body.subComplaint
+      complaint.status = req.body.status
 
-    // delete a user
-    app.delete('/complaints/:token/:id', (req, res) => {
-
-      try{
-
-        let user = auth.checkAuth(req.params.token);
-
-        if (!user) {
-          res.json(response.error("Access Denied!"));
-        }
-
-        if (!user.type || user.type != "employee") {
-          res.json(response.error("Access Denied!"));
-        }
-
-        if (user.department && user.department != "assistant") {
-          res.json(response.error("Access Denied!"));
-        }
-
-        Complaint.remove({
-          _id: req.params.id
-        }, function (error) {
-          if (error) {
-            console.error(error);
-            res.json(response.error("error occurred!"));
-          }
-          res.json(response.prepare({success: true}));
-        });
-
-      }catch(err){
-        res.json(response.error(err.message));
-      }
+      complaint.save(function (error, complaints) {
+        if (error) { console.log(error); }
+        res.send(complaints)
+      })
 
     });
 
+  })
+
+  // delete a user
+  app.delete('/complaints/:id', (req, res) => {
+    Complaint.remove({
+      _id: req.params.id
+    }, function (error) {
+      if (error) { console.error(error); }
+      res.send({ success: true })
+    })
+  })
 };
 
 

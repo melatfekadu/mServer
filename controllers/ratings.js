@@ -1,17 +1,17 @@
 /* eslint-disable */
-const User = require('../models/User.js');
+const Rating = require('../models/Rating.js');
 //const router = express.Router();
 module.exports.controller = function (app)  {
  // get all users
- app.get('/users', (req, res) => {
-  User.find({}, 'user_name password type', function (error, users) {
+ app.get('/ratings', (req, res) => {
+  Rating.find({}, 'user_name rating', function (error, users) {
   if (error) { console.log(error); }
   res.send(users);
   })
 })
 //get a single user details
-app.get('/user/:id', (req, res) => {
-  User.findById(req.params.id, 'user_name password type', function (error, user) {
+app.get('/rating/:id', (req, res) => {
+  Rating.findById(req.params.id, 'user_name rating', function (error, user) {
   if (error) { console.log(error); }
   res.send(user)
  })
@@ -19,24 +19,23 @@ app.get('/user/:id', (req, res) => {
  
      
  // add a new user
-    app.post('/users', (req, res) => {
-      const newUser = new User({
+    app.post('/ratings', (req, res) => {
+      const newRating = new Rating({
       user_name: req.body.user_name,
-      password: req.body.password,
-      type: req.body.type
+      rating: req.body.rating
     });
-        newUser.save((error, user) => {
+        newRating.save((error, user) => {
         if (error) { console.log(error); }
         res.send(user);
         });
     });
 
     // update a user
-  app.put('/user/:id', (req, res) => {
-    User.findById(req.params.id, 'username password', function (error, user) {
+  app.put('/rating/:id', (req, res) => {
+    User.findById(req.params.id, 'user_name rating', function (error, user) {
     if (error) { console.error(error); }
-      user.username = req.body.username
-      user.password = req.body.password
+      user.user_name = req.body.user_name
+      user.rating = req.body.rating
        user.save(function (error, user) {
     if (error) { console.log(error); }
        res.send(user)
@@ -45,8 +44,8 @@ app.get('/user/:id', (req, res) => {
 })
 
 // delete a user
-app.delete('/user/:id', (req, res) => {
-  User.remove({
+app.delete('/rating/:id', (req, res) => {
+  Rating.remove({
     _id: req.params.id
     }, function(error){
    if (error) { console.error(error); }

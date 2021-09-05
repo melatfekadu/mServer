@@ -7,11 +7,11 @@ const EmployeeSchema = new Schema({
  first_name: String,
  last_name: String,
  email: String,
- phone_no: Number,
+ phone_no: String,
  gender: String,
- branch: String,
  department: String,
  user_name: String,
+ type:String,
  password: String
 },{collection: "employee"});
 const Employee = mongoose.model('Employee', EmployeeSchema)

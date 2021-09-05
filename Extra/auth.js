@@ -6,6 +6,18 @@ module.exports = {
     getToken(length){
         return crypto.randomBytes(Math.ceil(length)).toString('hex').slice(0, length);
     },
+    getUser(token) {
+        let user;
+        try {
+            let credentials = this.getCredentials();
+            user = credentials[token];
+            return user.id;
+        }
+        catch(error){
+            //Handel Error
+            console.log(error);
+        }
+    },
     saveCredential(token, data){
 
         console.log("saving");
