@@ -1,4 +1,7 @@
 /* eslint-disable */
+const Customer = require('../models/Customer.js');
+
+const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const Complaint = require('../models/Complaint.js');
@@ -6,66 +9,90 @@ const Complaint = require('../models/Complaint.js');
 module.exports.controller = function (app) {
   // get all complaints
   app.get('/complaints', (req, res) => {
-    Complaint.find({}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+    Complaint.find({}, 'date bp_number select department description type subComplaint status', function (error, users) {
       if (error) { console.log(error); }
       res.send(users);
     })
   })
-    //get all assistant's complaint
-    app.get('/complaints1', (req, res) => {
-      Complaint.find({department:'Assistance'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
-        if (error) { console.log(error); }
-        res.send(users);
-      })
+  //get all assistant's complaint
+  app.get('/complaints1', (req, res) => {
+    Complaint.find({ department: 'Assistance' }, 'date bp_number select department description type subComplaint status', function (error, users) {
+      if (error) { console.log(error); }
+      res.send(users);
     })
-    //get customer service
-    app.get('/complaints2', (req, res) => {
-      Complaint.find({department:'Customer_Service'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
-        if (error) { console.log(error); }
-        res.send(users);
-      })
+  })
+  //get customer service
+  app.get('/complaints2', (req, res) => {
+    Complaint.find({ department: 'Customer_Service' }, 'date bp_number select department description type subComplaint status', function (error, users) {
+      if (error) { console.log(error); }
+      res.send(users);
     })
+  })
   app.get('/complaints3', (req, res) => {
-    Complaint.find({department:'Operation_Maintenance'}, 'date user_name address phone_no select department description type subComplaint status', function (error, users) {
+    Complaint.find({ department: 'Operation_Maintenance' }, 'date bp_number select department description type subComplaint status', function (error, users) {
       if (error) { console.log(error); }
       res.send(users);
     })
   })
   //get a single complaints details
   app.get('/complaints/:id', (req, res) => {
-    Complaint.findById(req.params.id, 'user_name address phone_no select department description type subComplaint status', function (error, user) {
+    Complaint.findById(req.params.id, ' select department description type subComplaint status', function (error, user) {
       if (error) { console.log(error); }
       res.send(user)
     })
   })
 
-
-  // add a new user
-  app.post('/complaints', (req, res) => {
-    const user_id = getUser(req.body.token);
-    const bp = user_id.bp_number;
-
-    const newComplaint = new Complaint({
-      date: Date.now(),
-      bp_number: bp,
-      select: req.body.select,
-      department: req.body.department,
-      description: req.body.description,
-      type: req.body.type,
-      subComplaint:req.body.subComplaint,
-      status: req.body.status,
-    });
-    newComplaint.save((error, complaint) => {
+  async function getBpById(id, req, res) {
+    await Customer.findById(id, 'bp_number first_name last_name email phone_no address gender user_name password', function (error, customer) {
       if (error) { console.log(error); }
-      res.send(complaint);
+      bpNum = customer["bp_number"];
+      console.log(this.bpNum);
+      const bp = this.bpNum;
+      const newComplaint = new Complaint({
+        date: Date.now(),
+        bp_number: bp,
+        select: req.body.select,
+        department: req.body.department,
+        description: req.body.description,
+        type: req.body.type,
+        subComplaint: req.body.subComplaint,
+        status: req.body.status,
+        test: req.body.test
+      });
+      console.log(newComplaint);
+      newComplaint.save((error, complaint) => {
+        if (error) { console.log(error); }
+        res.send(complaint);
+      });
+    })
+  }
+  // add a new user
+  app.post('/complaints/addComplaint', (req, res) => {
+    console.log("user_id");
+    const user_id = req.body.token;
+    let info = fs.readFileSync('./Extra/credentials.json', { encoding: 'utf8' });
+    let json = JSON.parse(info);
+    console.log(json[user_id]);
+    console.log(user_id);
+    let bpNum = "";
+
+    let x = getBpById(json[user_id]["id"], req, res).then((value) => {
+      console.log("sda");
+      console.log(x);
+    }).catch(() => {
+
+      console.log("Error!");
+
     });
+
+
   });
 
   // update a user
   app.put('/complaints/:id', (req, res) => {
 
     Complaint.findById(req.params.id, function (error, complaint) {
-      
+
       if (error) {
         console.error(error);
       }
@@ -76,7 +103,7 @@ module.exports.controller = function (app) {
       complaint.date = req.body.date
       complaint.description = req.body.description
       complaint.type = req.body.type
-      complaint.subComplaint=req.body.subComplaint
+      complaint.subComplaint = req.body.subComplaint
       complaint.status = req.body.status
 
       complaint.save(function (error, complaints) {
